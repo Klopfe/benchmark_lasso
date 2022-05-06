@@ -5,7 +5,6 @@ with safe_import_context() as import_ctx:
     import numpy as np
     from numpy.linalg import norm
     import scipy.optimize as sciop
-    from scipy.sparse import issparse
 
 
 class Solver(BaseSolver):
@@ -19,9 +18,6 @@ class Solver(BaseSolver):
     def skip(self, X, y, lmbd, fit_intercept):
         if fit_intercept:
             return True, f"{self.name} does not handle fit_intercept"
-        # XXX: make this solver work with sparse matrices.
-        if issparse(X):
-            return True, f"{self.name} does not support sparse design matrices"
         return False, None
 
     def run(self, n_iter):
@@ -53,11 +49,11 @@ class Solver(BaseSolver):
 
             def nabla_f(v):
                 u = u_opt(v)
-                x = u * v
-                Cx = C @ x
-                E = Cx @ x + y2 - 2 * x @ Xty
+                w = u * v
+                Cw = C @ w
+                E = Cw @ w + y2 - 2 * w @ Xty
                 f = 1/(2*lmbd) * E + (norm(u)**2 + norm(v)**2)/2
-                g = u * (Cx - Xty) / lmbd + v
+                g = u * (Cw - Xty) / lmbd + v
                 return f, g
 
         opts = {'gtol': 1e-8, 'maxiter': n_iter, 'maxcor': 100, 'ftol': 0}
